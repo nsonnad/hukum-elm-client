@@ -11,6 +11,9 @@ import Json.Encode as JE
 type Status
     = Unregistered
     | InLobby
+    | JoiningGame
+    | StartingGame
+    | InGame
 
 
 port addNewUser : JE.Value -> Cmd msg
@@ -22,11 +25,18 @@ port registered : (JE.Value -> msg) -> Sub msg
 port gotUserList : (JE.Value -> msg) -> Sub msg
 
 
+port joinedGameChannel : (JE.Value -> msg) -> Sub msg
+
+
+port startNewGame : JE.Value -> Cmd msg
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ registered Registered
         , gotUserList GotUserList
+        , joinedGameChannel JoinedGameChannel
         ]
 
 
@@ -37,6 +47,7 @@ subscriptions model =
 type alias Model =
     { status : Status
     , user_name : String
+    , game_name : String
     , all_users : List String
     }
 
@@ -45,6 +56,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { status = Unregistered
       , user_name = ""
+      , game_name = ""
       , all_users = []
       }
     , Cmd.none
@@ -57,9 +69,13 @@ init =
 
 type Msg
     = UpdateUsername String
+    | UpdateGameName String
     | AddNewUser JE.Value
     | Registered JE.Value
     | GotUserList JE.Value
+    | JoinGame
+    | StartNewGame JE.Value
+    | JoinedGameChannel JE.Value
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -67,6 +83,9 @@ update msg model =
     case msg of
         UpdateUsername user_name ->
             ( { model | user_name = user_name }, Cmd.none )
+
+        UpdateGameName game_name ->
+            ( { model | game_name = game_name }, Cmd.none )
 
         AddNewUser value ->
             ( model, addNewUser value )
@@ -88,6 +107,20 @@ update msg model =
             case JD.decodeValue decodeUserList usersRaw of
                 Ok users ->
                     ( { model | all_users = users }, Cmd.none )
+
+                Err error ->
+                    ( model, Cmd.none )
+
+        StartNewGame value ->
+            ( { model | status = StartingGame }, startNewGame value )
+
+        JoinGame ->
+            ( { model | status = JoiningGame }, Cmd.none )
+
+        JoinedGameChannel game ->
+            case JD.decodeValue JD.string game of
+                Ok game_name ->
+                    ( { model | status = InGame, game_name = game_name }, Cmd.none )
 
                 Err error ->
                     ( model, Cmd.none )
@@ -121,9 +154,38 @@ view model =
         InLobby ->
             div []
                 [ h1 [] [ text "In tha Lobby!" ]
+                , viewJoinOrCreateBtns model.user_name
                 , h2 [] [ text "Current players:" ]
                 , ul [] (List.map viewUserList model.all_users)
                 ]
+
+        JoiningGame ->
+            div [ class "join-game" ]
+                [ p [] [ text "Game name:" ]
+                , input
+                    [ type_ "text"
+                    , placeholder "game name"
+                    , value model.game_name
+                    , onInput UpdateGameName
+                    ]
+                    []
+                ]
+
+        StartingGame ->
+            div []
+                [ h1 [] [ text "Starting game!" ] ]
+
+        InGame ->
+            div []
+                [ h1 [] [ text ("Welcome to game" ++ model.game_name) ] ]
+
+
+viewJoinOrCreateBtns : String -> Html Msg
+viewJoinOrCreateBtns user_name =
+    div []
+        [ button [ onClick (StartNewGame (JE.string user_name)) ] [ text "New Game" ]
+        , button [ onClick JoinGame ] [ text "Join Game" ]
+        ]
 
 
 viewUserList : String -> Html Msg
