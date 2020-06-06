@@ -48,6 +48,14 @@ function joinGameChannel(user_name, msg) {
     gameChannel.join()
       .receive("ok", resp => { app.ports.joinedGameChannel.send(msg.game_name) })
       .receive("error", resp => { app.ports.joinedGameChannel.send(false) })
+
+    gameChannel.on("game_list")
+      .receive("ok", resp => { console.log(resp) })
+      .receive("error", resp => { console.log(resp) })
+
+    gameChannel.on("game_state")
+      .receive("ok", resp => { console.log(resp) })
+      .receive("error", resp => { console.log(resp) })
   })
 }
 
