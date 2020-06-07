@@ -19,7 +19,6 @@ app.ports.addNewUser.subscribe(function(user_name) {
   lobby.join()
     .receive("ok", resp => {
       app.ports.registered.send(true)
-      console.log(resp)
       app.ports.gotGameList.send(resp.games)
     })
     .receive("error", resp => { app.ports.registered.send(false) })
@@ -52,7 +51,6 @@ app.ports.startNewGame.subscribe(function(userName) {
 })
 
 app.ports.joinGame.subscribe(function(gameOpts) {
-  console.log(gameOpts)
   lobby.push("join_game", { game_name: gameOpts.gameName } )
     .receive("ok", (msg) => { joinGameChannel(lobby, gameOpts.userName, gameOpts.gameName)
     })
@@ -63,16 +61,13 @@ function joinGameChannel(lobby, userName, gameName) {
   lobby.leave().receive("ok", () => {
     gameChannel = socket.channel("game:" + gameName, {user_name: userName})
 
-    //gameChannel.join()
-      //.receive("ok", resp => { app.ports.joinedGameChannel.send(msg.game_name) })
-      //.receive("error", resp => { app.ports.joinedGameChannel.send(false) })
-
     gameChannel.join()
-      .receive("ok", resp => { console.log(resp)})
-      .receive("error", resp => { console.log("error", resp) })
+      .receive("ok", resp => { app.ports.joinedGameChannel.send(true) })
+      .receive("error", resp => { app.ports.joinedGameChannel.send(false) })
 
     gameChannel.on("game_state", gameState => {
-      console.log(gameState)
+      console.log('game_state', gameState.game)
+      app.ports.gotGameState.send(gameState.game)
     })
   })
 }

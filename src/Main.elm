@@ -6,6 +6,7 @@ import Html.Attributes exposing (class, classList, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import Json.Encode as JE
+import Page.Game as Game
 import Page.Lobby as Lobby
 
 
@@ -19,10 +20,12 @@ type alias Model =
 
 type Msg
     = GotLobbyMsg Lobby.Msg
+    | GotGameMsg Game.Msg
 
 
 type Page
     = Lobby Lobby.Model
+    | Game Game.Model
     | NotFound
 
 
@@ -33,6 +36,17 @@ type Page
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
+        GotLobbyMsg (Lobby.JoinedGameChannel joinedGame) ->
+            case JD.decodeValue JD.bool joinedGame of
+                Ok True ->
+                    ( { model | page = Game Game.initModel }, Cmd.none )
+
+                Ok False ->
+                    ( model, Cmd.none )
+
+                Err msg ->
+                    ( model, Cmd.none )
+
         GotLobbyMsg lobbyMsg ->
             case model.page of
                 Lobby lobby ->
@@ -41,10 +55,23 @@ update message model =
                 _ ->
                     ( model, Cmd.none )
 
+        GotGameMsg gameMsg ->
+            case model.page of
+                Game game ->
+                    toGame model (Game.update gameMsg game)
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 toLobby : Model -> ( Lobby.Model, Cmd Lobby.Msg ) -> ( Model, Cmd Msg )
 toLobby model ( lobby, cmd ) =
     ( { model | page = Lobby lobby }, Cmd.map GotLobbyMsg cmd )
+
+
+toGame : Model -> ( Game.Model, Cmd Game.Msg ) -> ( Model, Cmd Msg )
+toGame model ( game, cmd ) =
+    ( { model | page = Game game }, Cmd.map GotGameMsg cmd )
 
 
 
@@ -59,6 +86,10 @@ view model =
                 Lobby lobby ->
                     Lobby.view lobby
                         |> Html.map GotLobbyMsg
+
+                Game game ->
+                    Game.view game
+                        |> Html.map GotGameMsg
 
                 NotFound ->
                     text "Not Found"
@@ -83,13 +114,15 @@ subscriptions model =
             Lobby.subscriptions lobby
                 |> Sub.map GotLobbyMsg
 
+        Game game ->
+            Game.subscriptions game
+                |> Sub.map GotGameMsg
+
         _ ->
             Sub.none
 
 
 
---Game game ->
---Game.view game
 ---- PROGRAM ----
 
 

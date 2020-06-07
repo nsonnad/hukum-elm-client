@@ -1,4 +1,4 @@
-port module Page.Lobby exposing (Model, Msg, init, initModel, subscriptions, update, view)
+port module Page.Lobby exposing (..)
 
 import Data.GameList exposing (..)
 import Html exposing (..)
@@ -35,6 +35,7 @@ type Msg
     | StartNewGame JE.Value
     | AddNewUser JE.Value
     | JoinGame JE.Value
+    | JoinedGameChannel JE.Value
 
 
 initModel : Model
@@ -113,6 +114,9 @@ update msg model =
                 , gameName = gameName
                 }
             )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 decodeUserList : JD.Decoder (List String)
@@ -264,8 +268,7 @@ port gotUserList : (JE.Value -> msg) -> Sub msg
 port gotGameList : (JE.Value -> msg) -> Sub msg
 
 
-
---port joinedGameChannel : (JE.Value -> msg) -> Sub msg
+port joinedGameChannel : (JE.Value -> msg) -> Sub msg
 
 
 port startNewGame : JE.Value -> Cmd msg
@@ -280,4 +283,5 @@ subscriptions model =
         [ registered Registered
         , gotUserList GotUserList
         , gotGameList GotGameList
+        , joinedGameChannel JoinedGameChannel
         ]
