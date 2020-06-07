@@ -16,7 +16,7 @@ app.ports.addNewUser.subscribe(function(user_name) {
   lobby = socket.channel("lobby:lobby", {user_name: user_name})
 
   lobby.join()
-    .receive("ok", resp => { app.ports.registered.send(true) })
+    .receive("ok", resp => { console.log(resp); app.ports.registered.send(true) })
     .receive("error", resp => { app.ports.registered.send(false) })
 
   let presence = new Presence(lobby)
@@ -32,30 +32,35 @@ app.ports.addNewUser.subscribe(function(user_name) {
     app.ports.gotUserList.send(Object.keys(presences))
   })
 
+  lobby.on("game_list", game_list => {
+    console.log("games", game_list)
+  })
+
 })
 
 let gameChannel = {};
 
-app.ports.startNewGame.subscribe(function(user_name) {
-  lobby.push("new_game")
-    .receive("ok", (msg) => {joinGameChannel(user_name, msg)})
+app.ports.startNewGame.subscribe(function(userName) {
+  lobby.push("new_game", { user_name: userName, private: false } )
+    .receive("ok", (msg) => { joinGameChannel(lobby, userName, msg) })
     .receive("error", (msg) => { console.log("error", msg)})
 })
 
-function joinGameChannel(user_name, msg) {
+function joinGameChannel(lobby, user_name, msg) {
   lobby.leave().receive("ok", () => {
     gameChannel = socket.channel("game:" + msg.game_name, {user_name: user_name})
+
+    //gameChannel.join()
+      //.receive("ok", resp => { app.ports.joinedGameChannel.send(msg.game_name) })
+      //.receive("error", resp => { app.ports.joinedGameChannel.send(false) })
+
     gameChannel.join()
-      .receive("ok", resp => { app.ports.joinedGameChannel.send(msg.game_name) })
-      .receive("error", resp => { app.ports.joinedGameChannel.send(false) })
+      .receive("ok", resp => { console.log(resp)})
+      .receive("error", resp => { console.log("error", resp) })
 
-    gameChannel.on("game_list")
-      .receive("ok", resp => { console.log(resp) })
-      .receive("error", resp => { console.log(resp) })
-
-    gameChannel.on("game_state")
-      .receive("ok", resp => { console.log(resp) })
-      .receive("error", resp => { console.log(resp) })
+    gameChannel.on("game_state", gameState => {
+      console.log(gameState)
+    })
   })
 }
 

@@ -1,6 +1,5 @@
-module Page.Lobby exposing (Model, Msg, init, initModel, update, view)
+port module Page.Lobby exposing (Model, Msg, init, initModel, subscriptions, update, view)
 
-import Commands exposing (..)
 import Data.GameListGame exposing (..)
 import Html exposing (Html, button, div, h1, h2, input, li, p, text, ul)
 import Html.Attributes exposing (class, classList, placeholder, type_, value)
@@ -169,3 +168,30 @@ viewAddNewUserButton model =
     button
         [ type_ "submit", broadcastNewUser ]
         [ text "Submit" ]
+
+
+
+-- PORTS/SUBSCRIPTIONS
+
+
+port addNewUser : JE.Value -> Cmd msg
+
+
+port registered : (JE.Value -> msg) -> Sub msg
+
+
+port gotUserList : (JE.Value -> msg) -> Sub msg
+
+
+port joinedGameChannel : (JE.Value -> msg) -> Sub msg
+
+
+port startNewGame : JE.Value -> Cmd msg
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ registered Registered
+        , gotUserList GotUserList
+        ]

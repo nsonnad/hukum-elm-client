@@ -1,7 +1,6 @@
 module Main exposing (..)
 
-import Browser
-import Commands exposing (..)
+import Browser exposing (Document)
 import Html exposing (Html, button, div, h1, h2, input, li, p, text, ul)
 import Html.Attributes exposing (class, classList, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -10,40 +9,21 @@ import Json.Encode as JE
 import Page.Lobby as Lobby
 
 
-type Page
-    = Lobby Lobby.Model
 
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ registered Registered
-        , gotUserList GotUserList
-        , joinedGameChannel JoinedGameChannel
-        ]
-
-
-
---| Game Game.Model
 ---- MODEL ----
 
 
 type alias Model =
-    { page : Page
-    }
+    { page : Page }
 
 
 type Msg
-    = LobbyMsg Lobby.Msg
-    | JoinedGameChannel JE.Value
+    = GotLobbyMsg Lobby.Msg
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { page = Lobby Lobby.initModel
-      }
-    , Cmd.none
-    )
+type Page
+    = Lobby Lobby.Model
+    | NotFound
 
 
 
@@ -53,25 +33,50 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
-        LobbyMsg msg ->
-            Lobby.update msg model.page
+        GotLobbyMsg lobbyMsg ->
+            case model.page of
+                Lobby lobby ->
+                    toLobby model (Lobby.update lobbyMsg lobby)
+
+                _ ->
+                    ( model, Cmd.none )
+
+
+toLobby : Model -> ( Lobby.Model, Cmd Lobby.Msg ) -> ( Model, Cmd Msg )
+toLobby model ( lobby, cmd ) =
+    ( { model | page = Lobby lobby }, Cmd.map GotLobbyMsg cmd )
 
 
 
---JoinedGameChannel game ->
---case JD.decodeValue JD.string game of
---Ok game_name ->
---( { model | page = Game }, Cmd.none )
---Err error ->
---( model, Cmd.none )
 ---- VIEW ----
 
 
-view : Model -> Html Msg
+view : Model -> Document Msg
 view model =
+    let
+        content =
+            case model.page of
+                Lobby lobby ->
+                    Lobby.view lobby
+                        |> Html.map GotLobbyMsg
+
+                NotFound ->
+                    text "Not Found"
+    in
+    { title = "Hukum"
+    , body = [ content ]
+    }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
     case model.page of
         Lobby lobby ->
-            Lobby.view lobby
+            Lobby.subscriptions lobby
+                |> Sub.map GotLobbyMsg
+
+        _ ->
+            Sub.none
 
 
 
@@ -82,9 +87,9 @@ view model =
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.document
         { view = view
-        , init = \_ -> init
+        , init = \_ -> ( { page = Lobby Lobby.initModel }, Cmd.none )
         , update = update
         , subscriptions = subscriptions
         }
