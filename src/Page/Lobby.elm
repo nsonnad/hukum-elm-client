@@ -31,6 +31,7 @@ type Msg
     | GotUserList JE.Value
     | GotGameList JE.Value
     | ManualJoinGame
+    | ToLobby
     | JoinFromGameList String
     | StartNewGame JE.Value
     | AddNewUser JE.Value
@@ -101,6 +102,9 @@ update msg model =
         ManualJoinGame ->
             ( { model | status = JoiningGame }, Cmd.none )
 
+        ToLobby ->
+            ( { model | status = InLobby }, Cmd.none )
+
         JoinFromGameList gameName ->
             ( { model | status = JoiningGame, gameName = gameName }, Cmd.none )
 
@@ -147,22 +151,27 @@ view model =
 
 viewWrapper : Html Msg -> Html Msg
 viewWrapper children =
-    div [ class "page-wrapper" ] [ children ]
+    div [ class "page-wrapper row" ]
+        [ div [ class "column column-80 column-offset-10" ] [ children ] ]
 
 
 viewUnregistered : String -> Html Msg
 viewUnregistered userName =
-    div [ class "new-player-form" ]
-        [ p [] [ text "Welcome to Hukum, a card game." ]
-        , p [] [ text "Please enter a name we can call you by:" ]
-        , input
-            [ type_ "text"
-            , placeholder "username"
-            , value userName
-            , onInput UpdateUsername
+    div [ class "unregistered" ]
+        [ p [] [ text "Welcome. Please enter the name we should call you by:" ]
+        , div [ class "new-player-form row" ]
+            [ div [ class "column column-40 column-offset-25" ]
+                [ input
+                    [ type_ "text"
+                    , placeholder "username"
+                    , value userName
+                    , onInput UpdateUsername
+                    ]
+                    []
+                ]
+            , div [ class "column column-10 column-offset-65" ]
+                [ viewBroadcastButton userName AddNewUser ]
             ]
-            []
-        , viewBroadcastButton userName AddNewUser
         ]
 
 
@@ -183,15 +192,17 @@ viewBroadcastButton value action =
 viewInLobby : Model -> Html Msg
 viewInLobby model =
     div []
-        [ p [] [ text "This is the lobby. You can join an existing game\n                or start your own." ]
+        [ p [] [ text "This is the lobby. You can join an existing game, or start your own." ]
         , viewJoinOrCreateBtns model.userName
-        , div [ class "players-list" ]
-            [ p [] [ text "Current players:" ]
-            , ul [] (List.map viewUserList model.lobbyUsers)
-            ]
-        , div [ class "game-list" ]
-            [ p [] [ text "Open games:" ]
-            , viewGameList model.gameList
+        , div [ class "row lobby-info" ]
+            [ div [ class "column column-30 players-list" ]
+                [ h4 [] [ text "Players online" ]
+                , viewUserList model.lobbyUsers
+                ]
+            , div [ class "column column-60 game-list" ]
+                [ h4 [] [ text "Open games" ]
+                , viewGameList model.gameList
+                ]
             ]
         ]
 
@@ -199,21 +210,27 @@ viewInLobby model =
 viewJoiningGame : Model -> Html Msg
 viewJoiningGame model =
     div [ class "join-game" ]
-        [ p [] [ text "Game name:" ]
-        , input
-            [ type_ "text"
-            , placeholder "game name"
-            , value model.gameName
-            , onInput UpdateGameName
+        [ p [] [ text "Enter the name of the game you'd like to join." ]
+        , div [ class "row" ]
+            [ div [ class "column column-40 column-offset-25" ]
+                [ input
+                    [ type_ "text"
+                    , placeholder "game name"
+                    , value model.gameName
+                    , onInput UpdateGameName
+                    ]
+                    []
+                ]
+            , div [ class "column column-10 column-offset-65" ]
+                [ viewBroadcastButton model.gameName JoinGame ]
             ]
-            []
-        , viewBroadcastButton model.gameName JoinGame
+        , button [ class "back-button button-outline", onClick ToLobby ] [ text "← Back" ]
         ]
 
 
 viewJoinOrCreateBtns : String -> Html Msg
 viewJoinOrCreateBtns userName =
-    div []
+    div [ class "join-or-create" ]
         [ button [ onClick (StartNewGame (JE.string userName)) ] [ text "New Game" ]
         , button [ onClick ManualJoinGame ] [ text "Join Game" ]
         ]
@@ -226,6 +243,7 @@ viewGameList gl =
             [ [ thead []
                     [ th [] [ text "Game" ]
                     , th [] [ text "Started by" ]
+                    , th [] [ text "" ]
                     ]
               ]
             , List.map viewGameListGame gl
@@ -239,20 +257,28 @@ viewGameListGame glg =
         joinHandler =
             glg.name
                 |> JoinFromGameList
-                |> onDoubleClick
+                |> onClick
     in
-    tr [ joinHandler ]
+    tr [ class "game-list-row" ]
         [ td [] [ text glg.name ]
         , td [] [ text glg.startedBy ]
+        , td [ class "join-btn" ] [ button [ class "button-outline game-list-join", joinHandler ] [ text "Join" ] ]
         ]
 
 
-viewUserList : String -> Html Msg
-viewUserList user =
-    li [] [ text user ]
+viewUserList : List String -> Html Msg
+viewUserList users =
+    table []
+        (List.concat
+            [ [ thead [] [ th [] [ text "Player" ] ] ]
+            , List.map (\user -> tr [] [ td [] [ text user ] ]) users
+            ]
+        )
 
 
 
+--viewUserRow : String -> Html Msg
+--viewUserRow user =
 -- PORTS/SUBSCRIPTIONS
 
 

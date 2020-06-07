@@ -66,7 +66,7 @@ viewWrapper children =
 viewWaitingForPlayers : GameState -> Html Msg
 viewWaitingForPlayers gameState =
     div []
-        [ p [] [ text ("You're in the game" ++ gameState.id) ]
+        [ p [] [ text "You're in the game: ", strong [] [ text gameState.id ] ]
         , div [ class "players-list" ]
             [ p [] [ text "Current players:" ]
             , ul [] (List.map viewUserList gameState.players)

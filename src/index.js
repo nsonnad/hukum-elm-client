@@ -1,5 +1,7 @@
+import '../node_modules/normalize.css/normalize.css'
 import '../node_modules/milligram/dist/milligram.css'
 import './css/main.css';
+import 'typeface-roboto';
 import { Elm } from './Main.elm';
 import * as serviceWorker from './serviceWorker';
 import { Socket, Presence } from 'phoenix';
@@ -19,7 +21,7 @@ app.ports.addNewUser.subscribe(function(user_name) {
   lobby.join()
     .receive("ok", resp => {
       app.ports.registered.send(true)
-      app.ports.gotGameList.send(resp.games)
+      app.ports.gotGameList.send(resp.game_list)
     })
     .receive("error", resp => { app.ports.registered.send(false) })
 
@@ -37,7 +39,8 @@ app.ports.addNewUser.subscribe(function(user_name) {
   })
 
   lobby.on("game_list", resp => {
-    app.ports.gotGameList.send(resp.games)
+    console.log(resp)
+    app.ports.gotGameList.send(resp.game_list)
   })
 
 })
@@ -66,7 +69,6 @@ function joinGameChannel(lobby, userName, gameName) {
       .receive("error", resp => { app.ports.joinedGameChannel.send(false) })
 
     gameChannel.on("game_state", gameState => {
-      console.log('game_state', gameState.game)
       app.ports.gotGameState.send(gameState.game)
     })
   })

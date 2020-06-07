@@ -129,8 +129,8 @@ subscriptions model =
 main : Program () Model Msg
 main =
     Browser.document
-        { view = view
-        , init = \_ -> ( { page = Lobby Lobby.initModel }, Cmd.none )
+        { init = \_ -> ( { page = Lobby Lobby.initModel }, Cmd.none )
+        , view = view
         , update = update
         , subscriptions = subscriptions
         }
