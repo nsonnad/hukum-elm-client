@@ -1,4 +1,5 @@
-import './main.css';
+import '../node_modules/milligram/dist/milligram.css'
+import './css/main.css';
 import { Elm } from './Main.elm';
 import * as serviceWorker from './serviceWorker';
 import { Socket, Presence } from 'phoenix';
@@ -16,7 +17,11 @@ app.ports.addNewUser.subscribe(function(user_name) {
   lobby = socket.channel("lobby:lobby", {user_name: user_name})
 
   lobby.join()
-    .receive("ok", resp => { console.log(resp); app.ports.registered.send(true) })
+    .receive("ok", resp => {
+      app.ports.registered.send(true)
+      console.log(resp)
+      app.ports.gotGameList.send(resp.games)
+    })
     .receive("error", resp => { app.ports.registered.send(false) })
 
   let presence = new Presence(lobby)
@@ -32,8 +37,8 @@ app.ports.addNewUser.subscribe(function(user_name) {
     app.ports.gotUserList.send(Object.keys(presences))
   })
 
-  lobby.on("game_list", game_list => {
-    console.log("games", game_list)
+  lobby.on("game_list", resp => {
+    app.ports.gotGameList.send(resp.games)
   })
 
 })
@@ -42,13 +47,21 @@ let gameChannel = {};
 
 app.ports.startNewGame.subscribe(function(userName) {
   lobby.push("new_game", { user_name: userName, private: false } )
-    .receive("ok", (msg) => { joinGameChannel(lobby, userName, msg) })
+    .receive("ok", (msg) => { joinGameChannel(lobby, userName, msg.game_name) })
     .receive("error", (msg) => { console.log("error", msg)})
 })
 
-function joinGameChannel(lobby, user_name, msg) {
+app.ports.joinGame.subscribe(function(gameOpts) {
+  console.log(gameOpts)
+  lobby.push("join_game", { game_name: gameOpts.gameName } )
+    .receive("ok", (msg) => { joinGameChannel(lobby, gameOpts.userName, gameOpts.gameName)
+    })
+    .receive("error", (msg) => { console.log("error", msg)})
+})
+
+function joinGameChannel(lobby, userName, gameName) {
   lobby.leave().receive("ok", () => {
-    gameChannel = socket.channel("game:" + msg.game_name, {user_name: user_name})
+    gameChannel = socket.channel("game:" + gameName, {user_name: userName})
 
     //gameChannel.join()
       //.receive("ok", resp => { app.ports.joinedGameChannel.send(msg.game_name) })

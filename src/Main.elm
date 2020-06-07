@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Browser exposing (Document)
-import Html exposing (Html, button, div, h1, h2, input, li, p, text, ul)
+import Html exposing (Html, button, div, h1, h2, header, input, li, p, text, ul)
 import Html.Attributes exposing (class, classList, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
@@ -64,8 +64,16 @@ view model =
                     text "Not Found"
     in
     { title = "Hukum"
-    , body = [ content ]
+    , body =
+        [ viewHeader model.page
+        , content
+        ]
     }
+
+
+viewHeader : Page -> Html Msg
+viewHeader page =
+    header [] [ h2 [] [ text "Hukum" ] ]
 
 
 subscriptions : Model -> Sub Msg

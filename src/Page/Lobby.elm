@@ -1,9 +1,9 @@
 port module Page.Lobby exposing (Model, Msg, init, initModel, subscriptions, update, view)
 
-import Data.GameListGame exposing (..)
-import Html exposing (Html, button, div, h1, h2, input, li, p, text, ul)
+import Data.GameList exposing (..)
+import Html exposing (..)
 import Html.Attributes exposing (class, classList, placeholder, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onDoubleClick, onInput)
 import Json.Decode as JD
 import Json.Encode as JE
 
@@ -27,11 +27,14 @@ type alias Model =
 type Msg
     = UpdateUsername String
     | UpdateGameName String
-    | AddNewUser JE.Value
     | Registered JE.Value
     | GotUserList JE.Value
-    | JoinGame
+    | GotGameList JE.Value
+    | ManualJoinGame
+    | JoinFromGameList String
     | StartNewGame JE.Value
+    | AddNewUser JE.Value
+    | JoinGame JE.Value
 
 
 initModel : Model
@@ -62,9 +65,6 @@ update msg model =
         UpdateGameName gameName ->
             ( { model | gameName = gameName }, Cmd.none )
 
-        AddNewUser value ->
-            ( model, addNewUser value )
-
         Registered status ->
             case JD.decodeValue JD.bool status of
                 Ok True ->
@@ -86,11 +86,33 @@ update msg model =
                 Err error ->
                     ( model, Cmd.none )
 
+        GotGameList gamesRaw ->
+            case JD.decodeValue gameListDecoder gamesRaw of
+                Ok gameList ->
+                    ( { model | gameList = gameList }, Cmd.none )
+
+                Err error ->
+                    ( model, Cmd.none )
+
         StartNewGame value ->
             ( { model | status = StartingGame }, startNewGame value )
 
-        JoinGame ->
+        ManualJoinGame ->
             ( { model | status = JoiningGame }, Cmd.none )
+
+        JoinFromGameList gameName ->
+            ( { model | status = JoiningGame, gameName = gameName }, Cmd.none )
+
+        AddNewUser userName ->
+            ( model, addNewUser userName )
+
+        JoinGame gameName ->
+            ( model
+            , joinGame
+                { userName = JE.string model.userName
+                , gameName = gameName
+                }
+            )
 
 
 decodeUserList : JD.Decoder (List String)
@@ -106,68 +128,124 @@ view : Model -> Html Msg
 view model =
     case model.status of
         Unregistered ->
-            div [ class "new-player-form" ]
-                [ p [] [ text "Username:" ]
-                , input
-                    [ type_ "text"
-                    , placeholder "username"
-                    , value model.userName
-                    , onInput UpdateUsername
-                    ]
-                    []
-                , viewAddNewUserButton model
-                ]
+            viewWrapper (viewUnregistered model.userName)
 
         InLobby ->
-            div []
-                [ h1 [] [ text "In tha Lobby!" ]
-                , viewJoinOrCreateBtns model.userName
-                , h2 [] [ text "Current players:" ]
-                , ul [] (List.map viewUserList model.lobbyUsers)
-                ]
+            viewWrapper (viewInLobby model)
 
         JoiningGame ->
-            div [ class "join-game" ]
-                [ p [] [ text "Game name:" ]
-                , input
-                    [ type_ "text"
-                    , placeholder "game name"
-                    , value model.gameName
-                    , onInput UpdateGameName
-                    ]
-                    []
-                ]
+            viewWrapper (viewJoiningGame model)
 
         StartingGame ->
             div []
                 [ h1 [] [ text "Starting game!" ] ]
 
 
-viewJoinOrCreateBtns : String -> Html Msg
-viewJoinOrCreateBtns user_name =
+viewWrapper : Html Msg -> Html Msg
+viewWrapper children =
+    div [ class "page-wrapper" ] [ children ]
+
+
+viewUnregistered : String -> Html Msg
+viewUnregistered userName =
+    div [ class "new-player-form" ]
+        [ p [] [ text "Welcome to Hukum, a card game." ]
+        , p [] [ text "Please enter a name we can call you by:" ]
+        , input
+            [ type_ "text"
+            , placeholder "username"
+            , value userName
+            , onInput UpdateUsername
+            ]
+            []
+        , viewBroadcastButton userName AddNewUser
+        ]
+
+
+viewBroadcastButton : String -> (JE.Value -> Msg) -> Html Msg
+viewBroadcastButton value action =
+    let
+        broadcastAction =
+            value
+                |> JE.string
+                |> action
+                |> onClick
+    in
+    button
+        [ type_ "submit", broadcastAction ]
+        [ text "Submit" ]
+
+
+viewInLobby : Model -> Html Msg
+viewInLobby model =
     div []
-        [ button [ onClick (StartNewGame (JE.string user_name)) ] [ text "New Game" ]
-        , button [ onClick JoinGame ] [ text "Join Game" ]
+        [ p [] [ text "This is the lobby. You can join an existing game\n                or start your own." ]
+        , viewJoinOrCreateBtns model.userName
+        , div [ class "players-list" ]
+            [ p [] [ text "Current players:" ]
+            , ul [] (List.map viewUserList model.lobbyUsers)
+            ]
+        , div [ class "game-list" ]
+            [ p [] [ text "Open games:" ]
+            , viewGameList model.gameList
+            ]
+        ]
+
+
+viewJoiningGame : Model -> Html Msg
+viewJoiningGame model =
+    div [ class "join-game" ]
+        [ p [] [ text "Game name:" ]
+        , input
+            [ type_ "text"
+            , placeholder "game name"
+            , value model.gameName
+            , onInput UpdateGameName
+            ]
+            []
+        , viewBroadcastButton model.gameName JoinGame
+        ]
+
+
+viewJoinOrCreateBtns : String -> Html Msg
+viewJoinOrCreateBtns userName =
+    div []
+        [ button [ onClick (StartNewGame (JE.string userName)) ] [ text "New Game" ]
+        , button [ onClick ManualJoinGame ] [ text "Join Game" ]
+        ]
+
+
+viewGameList : GameList -> Html Msg
+viewGameList gl =
+    table []
+        (List.concat
+            [ [ thead []
+                    [ th [] [ text "Game" ]
+                    , th [] [ text "Started by" ]
+                    ]
+              ]
+            , List.map viewGameListGame gl
+            ]
+        )
+
+
+viewGameListGame : GameListGame -> Html Msg
+viewGameListGame glg =
+    let
+        joinHandler =
+            glg.name
+                |> JoinFromGameList
+                |> onDoubleClick
+    in
+    tr [ joinHandler ]
+        [ td [] [ text glg.name ]
+        , td [] [ text glg.startedBy ]
         ]
 
 
 viewUserList : String -> Html Msg
 viewUserList user =
     li [] [ text user ]
-
-
-viewAddNewUserButton : Model -> Html Msg
-viewAddNewUserButton model =
-    let
-        broadcastNewUser =
-            model.userName
-                |> JE.string
-                |> AddNewUser
-                |> onClick
-    in
-    button
-        [ type_ "submit", broadcastNewUser ]
-        [ text "Submit" ]
 
 
 
@@ -183,10 +261,17 @@ port registered : (JE.Value -> msg) -> Sub msg
 port gotUserList : (JE.Value -> msg) -> Sub msg
 
 
-port joinedGameChannel : (JE.Value -> msg) -> Sub msg
+port gotGameList : (JE.Value -> msg) -> Sub msg
+
+
+
+--port joinedGameChannel : (JE.Value -> msg) -> Sub msg
 
 
 port startNewGame : JE.Value -> Cmd msg
+
+
+port joinGame : { userName : JE.Value, gameName : JE.Value } -> Cmd msg
 
 
 subscriptions : Model -> Sub Msg
@@ -194,4 +279,5 @@ subscriptions model =
     Sub.batch
         [ registered Registered
         , gotUserList GotUserList
+        , gotGameList GotGameList
         ]
