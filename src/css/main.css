@@ -32,6 +32,10 @@ div.join-or-create button {
   margin: 0px 10px 10px 10px;
 }
 
+div.player-game-list table {
+  text-align: center;
+}
+
 .lobby-info {
   margin-top: 15px;
   text-align: left;

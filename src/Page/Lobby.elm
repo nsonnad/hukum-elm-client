@@ -1,6 +1,7 @@
 port module Page.Lobby exposing (..)
 
 import Data.GameList exposing (..)
+import Data.SharedTypes exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, placeholder, type_, value)
 import Html.Events exposing (onClick, onDoubleClick, onInput)
@@ -9,15 +10,13 @@ import Json.Encode as JE
 
 
 type Status
-    = Unregistered
-    | InLobby
+    = InLobby
     | JoiningGame
     | StartingGame
 
 
 type alias Model =
     { status : Status
-    , userName : String
     , gameList : List GameListGame
     , lobbyUsers : List String
     , gameName : String
@@ -25,24 +24,20 @@ type alias Model =
 
 
 type Msg
-    = UpdateUsername String
-    | UpdateGameName String
-    | Registered JE.Value
+    = UpdateGameName String
     | GotUserList JE.Value
     | GotGameList JE.Value
     | ManualJoinGame
     | ToLobby
     | JoinFromGameList String
     | StartNewGame JE.Value
-    | AddNewUser JE.Value
     | JoinGame JE.Value
     | JoinedGameChannel JE.Value
 
 
 initModel : Model
 initModel =
-    { status = Unregistered
-    , userName = ""
+    { status = InLobby
     , gameList = []
     , lobbyUsers = []
     , gameName = ""
@@ -58,27 +53,11 @@ init =
 ---- UPDATE ----
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Session -> Msg -> Model -> ( Model, Cmd Msg )
+update session msg model =
     case msg of
-        UpdateUsername userName ->
-            ( { model | userName = userName }, Cmd.none )
-
         UpdateGameName gameName ->
             ( { model | gameName = gameName }, Cmd.none )
-
-        Registered status ->
-            case JD.decodeValue JD.bool status of
-                Ok True ->
-                    ( { model | status = InLobby }
-                    , Cmd.none
-                    )
-
-                Ok False ->
-                    ( model, Cmd.none )
-
-                Err message ->
-                    ( model, Cmd.none )
 
         GotUserList usersRaw ->
             case JD.decodeValue decodeUserList usersRaw of
@@ -108,13 +87,10 @@ update msg model =
         JoinFromGameList gameName ->
             ( { model | status = JoiningGame, gameName = gameName }, Cmd.none )
 
-        AddNewUser userName ->
-            ( model, addNewUser userName )
-
         JoinGame gameName ->
             ( model
             , joinGame
-                { userName = JE.string model.userName
+                { userName = JE.string session.userName
                 , gameName = gameName
                 }
             )
@@ -132,14 +108,11 @@ decodeUserList =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Session -> Model -> Html Msg
+view session model =
     case model.status of
-        Unregistered ->
-            viewWrapper (viewUnregistered model.userName)
-
         InLobby ->
-            viewWrapper (viewInLobby model)
+            viewWrapper (viewInLobby session.userName model)
 
         JoiningGame ->
             viewWrapper (viewJoiningGame model)
@@ -155,45 +128,16 @@ viewWrapper children =
         [ div [ class "column column-80 column-offset-10" ] [ children ] ]
 
 
-viewUnregistered : String -> Html Msg
-viewUnregistered userName =
-    div [ class "unregistered" ]
-        [ p [] [ text "Welcome. Please enter the name we should call you by:" ]
-        , div [ class "new-player-form row" ]
-            [ div [ class "column column-40 column-offset-25" ]
-                [ input
-                    [ type_ "text"
-                    , placeholder "username"
-                    , value userName
-                    , onInput UpdateUsername
-                    ]
-                    []
-                ]
-            , div [ class "column column-10 column-offset-65" ]
-                [ viewBroadcastButton userName AddNewUser ]
-            ]
-        ]
-
-
-viewBroadcastButton : String -> (JE.Value -> Msg) -> Html Msg
-viewBroadcastButton value action =
-    let
-        broadcastAction =
-            value
-                |> JE.string
-                |> action
-                |> onClick
-    in
-    button
-        [ type_ "submit", broadcastAction ]
-        [ text "Submit" ]
-
-
-viewInLobby : Model -> Html Msg
-viewInLobby model =
+viewInLobby : String -> Model -> Html Msg
+viewInLobby userName model =
     div []
-        [ p [] [ text "This is the lobby. You can join an existing game, or start your own." ]
-        , viewJoinOrCreateBtns model.userName
+        [ p []
+            [ text "Hi "
+            , strong [] [ text userName ]
+            , text " ."
+            , text "This is the lobby. You can join an existing game, or start your own."
+            ]
+        , viewJoinOrCreateBtns userName
         , div [ class "row lobby-info" ]
             [ div [ class "column column-30 players-list" ]
                 [ h4 [] [ text "Players online" ]
@@ -226,6 +170,20 @@ viewJoiningGame model =
             ]
         , button [ class "back-button button-outline", onClick ToLobby ] [ text "← Back" ]
         ]
+
+
+viewBroadcastButton : String -> (JE.Value -> Msg) -> Html Msg
+viewBroadcastButton value action =
+    let
+        broadcastAction =
+            value
+                |> JE.string
+                |> action
+                |> onClick
+    in
+    button
+        [ type_ "submit", broadcastAction ]
+        [ text "Submit" ]
 
 
 viewJoinOrCreateBtns : String -> Html Msg
@@ -282,12 +240,6 @@ viewUserList users =
 -- PORTS/SUBSCRIPTIONS
 
 
-port addNewUser : JE.Value -> Cmd msg
-
-
-port registered : (JE.Value -> msg) -> Sub msg
-
-
 port gotUserList : (JE.Value -> msg) -> Sub msg
 
 
@@ -306,8 +258,7 @@ port joinGame : { userName : JE.Value, gameName : JE.Value } -> Cmd msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ registered Registered
-        , gotUserList GotUserList
+        [ gotUserList GotUserList
         , gotGameList GotGameList
         , joinedGameChannel JoinedGameChannel
         ]

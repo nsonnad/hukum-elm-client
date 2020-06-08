@@ -49,7 +49,7 @@ view model =
                     viewWrapper (viewWaitingForPlayers gameState)
 
                 ChoosingTeams ->
-                    viewWrapper (viewWaitingForPlayers gameState)
+                    viewWrapper (viewChooseTeams gameState)
 
                 CallOrPass ->
                     viewWrapper (viewWaitingForPlayers gameState)
@@ -66,10 +66,22 @@ viewWrapper children =
 viewWaitingForPlayers : GameState -> Html Msg
 viewWaitingForPlayers gameState =
     div []
-        [ p [] [ text "You're in the game: ", strong [] [ text gameState.id ] ]
-        , div [ class "players-list" ]
-            [ p [] [ text "Current players:" ]
-            , ul [] (List.map viewUserList gameState.players)
+        [ p []
+            [ text "You're in the game "
+            , strong [ class "game-name-inline" ] [ text gameState.id ]
+            , text ". "
+            , text "We're waiting for other players to join, hang tight."
+            ]
+        , h4 [] [ text "Who's here now:" ]
+        , div [ class "row player-game-list" ]
+            [ div [ class "column column-50 column-offset-25" ]
+                [ table []
+                    (List.concat
+                        [ [ thead [] [ th [] [ text "Player" ] ] ]
+                        , List.map (\p -> tr [] [ td [] [ text p.name ] ]) gameState.players
+                        ]
+                    )
+                ]
             ]
         ]
 
@@ -77,6 +89,11 @@ viewWaitingForPlayers gameState =
 viewUserList : Player -> Html Msg
 viewUserList player =
     li [] [ text player.name ]
+
+
+viewChooseTeams : GameState -> Html Msg
+viewChooseTeams gameState =
+    h2 [] [ text "choosing teams" ]
 
 
 
