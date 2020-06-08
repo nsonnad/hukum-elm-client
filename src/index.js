@@ -71,6 +71,10 @@ function joinGameChannel(lobby, userName, gameName) {
     gameChannel.on("game_state", gameState => {
       app.ports.gotGameState.send(gameState.game)
     })
+
+    app.ports.pushPlayerAction.subscribe(function(action) {
+      gameChannel.push(action.action, action.payload)
+    })
   })
 }
 

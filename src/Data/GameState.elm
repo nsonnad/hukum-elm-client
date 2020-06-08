@@ -1,6 +1,6 @@
 module Data.GameState exposing (..)
 
-import Data.Card exposing (..)
+import Data.Cards exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Decode.Pipeline exposing (custom, required)

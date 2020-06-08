@@ -16,6 +16,11 @@ type alias Model =
 
 type Msg
     = GotGameState JE.Value
+    | Action PlayerAction
+
+
+type PlayerAction
+    = ChooseTeam Int
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -28,6 +33,9 @@ update session msg model =
 
                 Err error ->
                     ( model, Cmd.none )
+
+        Action action ->
+            ( model, pushPlayerAction (encodeAction action) )
 
 
 initModel : Model
@@ -94,7 +102,47 @@ viewUserList player =
 
 viewChooseTeams : GameState -> Html Msg
 viewChooseTeams gameState =
-    h2 [] [ text "choosing teams" ]
+    div [ class "choose-teams" ]
+        [ h4 [] [ text "Everyone's here. It's time to pick teams." ]
+        , div [ class "select-team-buttons" ]
+            [ button [ onClick (Action (ChooseTeam 1)) ] [ text "Team One" ]
+            , button [ onClick (Action (ChooseTeam 2)) ] [ text "Team Two" ]
+            ]
+        , div [ class "row" ]
+            [ viewGenerateTeamList gameState.players ]
+        ]
+
+
+viewGenerateTeamList : List Player -> Html Msg
+viewGenerateTeamList players =
+    div [ class "team-display column column-50 column-offset-25" ]
+        [ table []
+            (List.concat
+                [ [ thead []
+                        [ th [] [ text "Player " ]
+                        , th [] [ text "Team" ]
+                        ]
+                  ]
+                , List.map viewGenerateTeamPlayer players
+                ]
+            )
+        ]
+
+
+viewGenerateTeamPlayer : Player -> Html Msg
+viewGenerateTeamPlayer player =
+    case player.team of
+        Just team ->
+            tr []
+                [ td [] [ text player.name ]
+                , td [] [ text (String.fromInt team) ]
+                ]
+
+        Nothing ->
+            tr []
+                [ td [] [ text player.name ]
+                , td [] [ text "Undecided..." ]
+                ]
 
 
 
@@ -102,6 +150,19 @@ viewChooseTeams gameState =
 
 
 port gotGameState : (JE.Value -> msg) -> Sub msg
+
+
+port pushPlayerAction : JE.Value -> Cmd msg
+
+
+encodeAction : PlayerAction -> JE.Value
+encodeAction action =
+    case action of
+        ChooseTeam team ->
+            JE.object
+                [ ( "action", JE.string "choose_team" )
+                , ( "payload", JE.object [ ( "team", JE.int team ) ] )
+                ]
 
 
 subscriptions : Model -> Sub Msg
