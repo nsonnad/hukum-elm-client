@@ -1,6 +1,7 @@
 port module Page.Game exposing (..)
 
 import Data.GameState exposing (..)
+import Data.SharedTypes exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, placeholder, type_, value)
 import Html.Events exposing (onClick, onDoubleClick, onInput)
@@ -17,8 +18,8 @@ type Msg
     = GotGameState JE.Value
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Session -> Msg -> Model -> ( Model, Cmd Msg )
+update session msg model =
     case msg of
         GotGameState gs ->
             case JD.decodeValue gameStateDecoder gs of
@@ -40,8 +41,8 @@ init =
     ( initModel, Cmd.none )
 
 
-view : Model -> Html Msg
-view model =
+view : Session -> Model -> Html Msg
+view session model =
     case model.gameState of
         Just gameState ->
             case gameState.stage of

@@ -84,7 +84,7 @@ update message model =
         GotGameMsg gameMsg ->
             case model.page of
                 Game game ->
-                    toGame model (Game.update gameMsg game)
+                    toGame model (Game.update model.session gameMsg game)
 
                 _ ->
                     ( model, Cmd.none )
@@ -122,7 +122,7 @@ view model =
                         |> Html.map GotLobbyMsg
 
                 Game game ->
-                    Game.view game
+                    Game.view model.session game
                         |> Html.map GotGameMsg
 
                 NotFound ->
