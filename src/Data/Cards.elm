@@ -84,3 +84,52 @@ cardDecoder =
     JD.succeed Card
         |> custom (JD.field "rank" JD.string |> JD.andThen rankDecoder)
         |> custom (JD.field "suit" JD.string |> JD.andThen suitDecoder)
+
+
+cardToString : Card -> String
+cardToString { rank, suit } =
+    rankToString rank ++ "_of_" ++ suitToString suit
+
+
+rankToString : Rank -> String
+rankToString rank =
+    case rank of
+        Seven ->
+            "Seven"
+
+        Eight ->
+            "Eight"
+
+        Nine ->
+            "Nine"
+
+        Ten ->
+            "Ten"
+
+        Jack ->
+            "Jack"
+
+        Queen ->
+            "Queen"
+
+        King ->
+            "King"
+
+        Ace ->
+            "Ace"
+
+
+suitToString : Suit -> String
+suitToString suit =
+    case suit of
+        Clubs ->
+            "Clubs"
+
+        Diamonds ->
+            "Diamonds"
+
+        Hearts ->
+            "Hearts"
+
+        Spades ->
+            "Spades"

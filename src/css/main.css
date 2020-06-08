@@ -5,6 +5,12 @@
   More context in the issue:
     https://github.com/halfzebra/create-elm-app/issues/320
 */
+:root {
+  --card-width: 5rem;
+  --card-height: calc(var(--card-width) * 2);
+  --card-thickness: calc(var(--card-width) / 20rem);
+}
+
 [data-elm-hot="true"] {
   height: inherit;
 }
@@ -104,18 +110,42 @@ div.player-area {
   align-items: center;
 }
 
-/*div.card-table-center div.card-table-left {*/
-  /*flex: 1 1 30%;*/
-/*}*/
+.card {
+  border-radius: calc(var(--card-width) / 8);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.15);
+  border: 1px solid #ccc;
+  padding: calc(var(--card-width) / 12);
+  padding-bottom: calc(var(--card-width) / 24);
+  background: white;
+  overflow: hidden;
+}
 
-/*div.card-table-center div.card-table-play-area {*/
-  /*flex: 1 1 40%;*/
-/*}*/
+.card  img {
+  width: var(--card-width);
+  margin: 0;
+}
 
-/*div.card-table-center div.card-table-right {*/
-  /*flex: 1 1 30%;*/
-  /*margin-left: auto;*/
-/*}*/
+
+div.card-table-left .hand {
+  transform: rotate(90deg);
+}
+
+div.card-table-right .hand {
+  transform: rotate(270deg);
+}
+
+.hand {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  position: relative;
+}
+
+.hand .card {
+  flex: 0 1 auto;
+  margin-left: calc(var(--card-width) * -0.2);
+  transition: 0.1s ease-in-out;
+}
 
 div.card-table-bottom {
   flex: 1;
