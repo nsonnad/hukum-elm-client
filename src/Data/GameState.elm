@@ -4,12 +4,22 @@ import Data.Cards exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as JD
 import Json.Decode.Pipeline exposing (custom, required)
+import Json.Encode as JE
 
 
 type Stage
     = WaitingForPlayers
     | ChoosingTeams
     | CallOrPass
+
+
+type PlayerAction
+    = ChooseTeam Int
+
+
+type Msg
+    = GotGameState JE.Value
+    | Action PlayerAction
 
 
 type alias Player =

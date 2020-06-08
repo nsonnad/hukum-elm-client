@@ -1,8 +1,9 @@
 port module Main exposing (..)
 
 import Browser exposing (Document)
+import Data.GameState exposing (..)
 import Data.SharedTypes exposing (..)
-import Html exposing (Html, button, div, h1, h2, header, input, li, p, text, ul)
+import Html exposing (..)
 import Html.Attributes exposing (class, classList, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
@@ -26,7 +27,7 @@ type Msg
     | AddNewUser JE.Value
     | Registered JE.Value
     | GotLobbyMsg Lobby.Msg
-    | GotGameMsg Game.Msg
+    | GotGameMsg Data.GameState.Msg
 
 
 type Page
@@ -95,7 +96,7 @@ toLobby model ( lobby, cmd ) =
     ( { model | page = Lobby lobby }, Cmd.map GotLobbyMsg cmd )
 
 
-toGame : Model -> ( Game.Model, Cmd Game.Msg ) -> ( Model, Cmd Msg )
+toGame : Model -> ( Game.Model, Cmd Data.GameState.Msg ) -> ( Model, Cmd Msg )
 toGame model ( game, cmd ) =
     ( { model | page = Game game }, Cmd.map GotGameMsg cmd )
 
@@ -178,7 +179,12 @@ viewBroadcastButton value action =
 
 viewHeader : Page -> Html Msg
 viewHeader page =
-    header [] [ h2 [] [ text "Hukum" ] ]
+    case page of
+        Game _ ->
+            header [ class "header-game" ] [ h4 [] [ text "Hukum" ] ]
+
+        _ ->
+            header [] [ h2 [] [ text "Hukum" ] ]
 
 
 subscriptions : Model -> Sub Msg

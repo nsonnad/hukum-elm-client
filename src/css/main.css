@@ -9,6 +9,15 @@
   height: inherit;
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.page-wrapper {
+  height: 90%;
+}
+
 body {
   font-family: 'Roboto', serif;
   margin: 0;
@@ -17,7 +26,12 @@ body {
 
 header {
   text-align: center;
-  padding-top: 10px;
+  margin-top: 10px;
+}
+
+header.header-game {
+  text-align: left;
+  margin-left: 15px;
 }
 
 .page-wrapper {
@@ -60,6 +74,51 @@ button.game-list-join {
 
 button.back-button {
   text-align: left;
+}
+
+div.card-table {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  align-content: center;
+  height: 100%;
+}
+
+div.card-table-top {
+  flex: 1;
+  align-items: center;
+}
+
+div.card-table-center {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+}
+
+div.player-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/*div.card-table-center div.card-table-left {*/
+  /*flex: 1 1 30%;*/
+/*}*/
+
+/*div.card-table-center div.card-table-play-area {*/
+  /*flex: 1 1 40%;*/
+/*}*/
+
+/*div.card-table-center div.card-table-right {*/
+  /*flex: 1 1 30%;*/
+  /*margin-left: auto;*/
+/*}*/
+
+div.card-table-bottom {
+  flex: 1;
 }
 
 h1 {

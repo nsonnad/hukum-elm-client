@@ -7,20 +7,12 @@ import Html.Attributes exposing (class, classList, placeholder, type_, value)
 import Html.Events exposing (onClick, onDoubleClick, onInput)
 import Json.Decode as JD
 import Json.Encode as JE
+import View.GameTable exposing (..)
 
 
 type alias Model =
     { gameState : Maybe GameState
     }
-
-
-type Msg
-    = GotGameState JE.Value
-    | Action PlayerAction
-
-
-type PlayerAction
-    = ChooseTeam Int
 
 
 update : Session -> Msg -> Model -> ( Model, Cmd Msg )
@@ -61,7 +53,7 @@ view session model =
                     viewWrapper (viewChooseTeams gameState)
 
                 CallOrPass ->
-                    viewWrapper (viewWaitingForPlayers gameState)
+                    viewWrapper (viewGameTable session gameState)
 
         Nothing ->
             h1 [] [ text "Game." ]
@@ -79,9 +71,9 @@ viewWaitingForPlayers gameState =
             [ text "You're in the game "
             , strong [ class "game-name-inline" ] [ text gameState.id ]
             , text ". "
-            , text "We're waiting for other players to join, hang tight."
+            , text "Waiting for other players to join, hang tight."
             ]
-        , h4 [] [ text "Who's here now:" ]
+        , h4 [] [ text "Who's here so far:" ]
         , div [ class "row player-game-list" ]
             [ div [ class "column column-50 column-offset-25" ]
                 [ table []
@@ -143,6 +135,11 @@ viewGenerateTeamPlayer player =
                 [ td [] [ text player.name ]
                 , td [] [ text "Undecided..." ]
                 ]
+
+
+viewGameTable : Session -> GameState -> Html Msg
+viewGameTable session gameState =
+    cardTableView session gameState.players
 
 
 
