@@ -12,7 +12,10 @@ type alias Card =
 
 
 type alias PlayedCard =
-    ( String, Card )
+    { rank : Rank
+    , suit : Suit
+    , player : String
+    }
 
 
 type Rank
@@ -94,14 +97,27 @@ cardDecoder =
         |> custom (JD.field "suit" JD.string |> JD.andThen suitDecoder)
 
 
-arrayAsTuple2 : JD.Decoder a -> JD.Decoder b -> JD.Decoder ( a, b )
-arrayAsTuple2 a b =
-    JD.index 0 a
-        |> JD.andThen
-            (\aVal ->
-                JD.index 1 b
-                    |> JD.andThen (\bVal -> JD.succeed ( aVal, bVal ))
-            )
+playedCardDecoder : JD.Decoder PlayedCard
+playedCardDecoder =
+    JD.succeed PlayedCard
+        |> custom (JD.field "rank" JD.string |> JD.andThen rankDecoder)
+        |> custom (JD.field "suit" JD.string |> JD.andThen suitDecoder)
+        |> required "player" JD.string
+
+
+encodeCard : Card -> JE.Value
+encodeCard { rank, suit } =
+    let
+        rankVal =
+            String.toLower (rankToString rank)
+
+        suitVal =
+            String.toLower (suitToString suit)
+    in
+    JE.object
+        [ ( "rank", JE.string rankVal )
+        , ( "suit", JE.string suitVal )
+        ]
 
 
 cardToString : Card -> String

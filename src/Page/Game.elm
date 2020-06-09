@@ -1,5 +1,6 @@
 port module Page.Game exposing (..)
 
+import Data.Cards exposing (..)
 import Data.GameState exposing (..)
 import Data.SharedTypes exposing (..)
 import Html exposing (..)
@@ -64,6 +65,27 @@ view session model =
 
                 ( CallOrPass, False ) ->
                     viewWrapper [ viewGameTable session gameState ]
+
+                ( WaitingForFirstCard, _ ) ->
+                    viewWrapper [ viewGameTable session gameState ]
+
+                ( WaitingForTrump, True ) ->
+                    viewWrapper
+                        [ viewSelectTrump
+                        , viewGameTable session gameState
+                        ]
+
+                ( WaitingForTrump, False ) ->
+                    viewWrapper [ viewGameTable session gameState ]
+
+                ( PlayingHand, _ ) ->
+                    viewWrapper [ viewGameTable session gameState ]
+
+                ( GameOver, _ ) ->
+                    viewWrapper
+                        [ viewGameOver
+                        , viewGameTable session gameState
+                        ]
 
         Nothing ->
             h1 [] [ text "Game." ]
@@ -149,17 +171,46 @@ viewGenerateTeamPlayer player =
 
 viewCallOrPass : Html Msg
 viewCallOrPass =
-    div [ class "interaction-overlay-outer" ]
-        [ div [ class "interaction-overlay-inner" ]
+    viewOverlay
+        [ div [] [ h4 [] [ text "What do you think?" ] ]
+        , div []
             [ button [ onClick (Action (ChooseCallOrPass Pass)), class "button-outline" ] [ text "Pass" ]
             , button [ onClick (Action (ChooseCallOrPass Call)), class "button-outline" ] [ text "Call" ]
             ]
         ]
 
 
+viewSelectTrump : Html Msg
+viewSelectTrump =
+    viewOverlay
+        [ div [] [ h4 [] [ text "What will you call?" ] ]
+        , div []
+            [ button [ onClick (Action (CallTrump Clubs)), class "button-outline" ] [ text "Clubs" ]
+            , button [ onClick (Action (CallTrump Diamonds)), class "button-outline" ] [ text "Diamonds" ]
+            , button [ onClick (Action (CallTrump Hearts)), class "button-outline" ] [ text "Hearts" ]
+            , button [ onClick (Action (CallTrump Spades)), class "button-outline" ] [ text "Spades" ]
+            ]
+        ]
+
+
 viewGameTable : Session -> GameState -> Html Msg
-viewGameTable session gameState =
-    cardTableView session gameState.players
+viewGameTable session gs =
+    cardTableView session gs
+
+
+viewGameOver : Html Msg
+viewGameOver =
+    viewOverlay
+        [ h4 [] [ text "That's it!" ]
+        , p [] [ text "Final score:" ]
+        , text "TK"
+        ]
+
+
+viewOverlay : List (Html Msg) -> Html Msg
+viewOverlay children =
+    div [ class "interaction-overlay-outer" ]
+        [ div [ class "interaction-overlay-inner" ] children ]
 
 
 
@@ -187,6 +238,21 @@ encodeAction action =
                 , ( "payload"
                   , JE.object
                         [ ( "choice", JE.string (choiceToString choice) ) ]
+                  )
+                ]
+
+        PlayCard card ->
+            JE.object
+                [ ( "action", JE.string "play_card" )
+                , ( "payload", JE.object [ ( "card", encodeCard card ) ] )
+                ]
+
+        CallTrump suit ->
+            JE.object
+                [ ( "action", JE.string "call_trump" )
+                , ( "payload"
+                  , JE.object
+                        [ ( "trump", JE.string (String.toLower (suitToString suit)) ) ]
                   )
                 ]
 

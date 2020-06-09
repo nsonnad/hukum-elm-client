@@ -11,6 +11,10 @@ type Stage
     = WaitingForPlayers
     | ChoosingTeams
     | CallOrPass
+    | WaitingForFirstCard
+    | WaitingForTrump
+    | PlayingHand
+    | GameOver
 
 
 type Choice
@@ -22,6 +26,8 @@ type Choice
 type PlayerAction
     = ChooseTeam Int
     | ChooseCallOrPass Choice
+    | CallTrump Suit
+    | PlayCard Card
 
 
 type Msg
@@ -40,10 +46,6 @@ type alias Score =
     Dict String Int
 
 
-type alias Trick =
-    List PlayedCard
-
-
 type alias GameState =
     { id : String
     , stage : Stage
@@ -51,10 +53,11 @@ type alias GameState =
     , score : Score
     , turn : String
     , dealer : String
-    , current_trick : List PlayedCard
-    , calling_team : Maybe Int
-    , suit_led : Suit
-    , suit_trump : Suit
+    , currentTrick : List Card
+    , handTrickWinners : List Int
+    , callingTeam : Maybe Int
+    , suitLed : Suit
+    , suitTrump : Suit
     }
 
 
@@ -67,7 +70,8 @@ gameStateDecoder =
         |> required "score" scoreDecoder
         |> required "turn" JD.string
         |> required "dealer" JD.string
-        |> custom (JD.field "current_trick" (JD.list playedCardDecoder))
+        |> custom (JD.field "current_trick" (JD.list cardDecoder))
+        |> required "hand_trick_winners" (JD.list JD.int)
         |> required "calling_team" (JD.nullable JD.int)
         |> custom (JD.field "suit_led" JD.string |> JD.andThen suitDecoder)
         |> custom (JD.field "suit_trump" JD.string |> JD.andThen suitDecoder)
@@ -103,13 +107,20 @@ stageDecoder stage =
         "call_or_pass" ->
             JD.succeed CallOrPass
 
+        "waiting_for_first_card" ->
+            JD.succeed WaitingForFirstCard
+
+        "waiting_for_trump" ->
+            JD.succeed WaitingForTrump
+
+        "playing_hand" ->
+            JD.succeed PlayingHand
+
+        "game_over" ->
+            JD.succeed GameOver
+
         _ ->
             JD.fail ("invalid stage: " ++ stage)
-
-
-playedCardDecoder : JD.Decoder PlayedCard
-playedCardDecoder =
-    arrayAsTuple2 JD.string cardDecoder
 
 
 
@@ -120,7 +131,7 @@ choiceToString : Choice -> String
 choiceToString choice =
     case choice of
         Call ->
-            "call"
+            "calling"
 
         Pass ->
             "pass"

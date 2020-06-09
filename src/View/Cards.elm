@@ -1,4 +1,4 @@
-module View.Cards exposing (activeHandView, concealedHandView, visibleHandView)
+module View.Cards exposing (..)
 
 import Data.Cards exposing (..)
 import Html exposing (Attribute, Html, div, img)
