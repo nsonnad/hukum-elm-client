@@ -67,7 +67,7 @@ playedCardsView cards stage =
 
         _ ->
             div [ class "current-trick" ]
-                (List.map (cardFrontView []) cards)
+                (List.map (cardFrontView []) (List.reverse cards))
 
 
 cardTableView : Session -> GameState -> Html Msg

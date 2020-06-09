@@ -6,9 +6,9 @@
     https://github.com/halfzebra/create-elm-app/issues/320
 */
 :root {
-  --card-width: 5rem;
+  --card-width: 6rem;
   --card-height: calc(var(--card-width) * 2);
-  --card-thickness: calc(var(--card-width) / 20rem);
+  --card-thickness: calc(var(--card-width) / 20);
   --background-color: #fcfcfc;
 }
 
@@ -111,7 +111,7 @@ div.card-table-center {
 }
 
 div.player-area {
-  flex: 1;
+  flex: 0 0;
   display: flex;
   align-items: center;
 }
@@ -186,6 +186,7 @@ div.interaction-overlay-inner button {
 
 .selectable:hover {
   transform: translateY(-0.8em);
+  cursor: pointer;
 }
 
 .current-trick {
