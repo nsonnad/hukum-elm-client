@@ -126,11 +126,19 @@ div.player-area {
 }
 
 
-div.card-table-left .hand {
+div.card-table-left .player-view {
   transform: rotate(90deg);
 }
 
-div.card-table-right .hand {
+div.card-table-top .player-view {
+  transform: rotate(180deg);
+}
+
+div.card-table-top .player-name {
+  transform: rotate(180deg);
+}
+
+div.card-table-right .player-view {
   transform: rotate(270deg);
 }
 
@@ -143,7 +151,7 @@ div.card-table-right .hand {
 
 .hand .card {
   flex: 0 1 auto;
-  margin-left: calc(var(--card-width) * -0.2);
+  margin-left: calc(var(--card-width) * -0.4);
   transition: 0.1s ease-in-out;
 }
 

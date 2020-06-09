@@ -69,6 +69,7 @@ function joinGameChannel(lobby, userName, gameName) {
       .receive("error", resp => { app.ports.joinedGameChannel.send(false) })
 
     gameChannel.on("game_state", gameState => {
+      console.log(gameState)
       app.ports.gotGameState.send(gameState.game)
     })
 

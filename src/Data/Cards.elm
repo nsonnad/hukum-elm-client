@@ -11,6 +11,10 @@ type alias Card =
     }
 
 
+type alias PlayedCard =
+    ( String, Card )
+
+
 type Rank
     = Seven
     | Eight
@@ -27,6 +31,7 @@ type Suit
     | Diamonds
     | Hearts
     | Spades
+    | Undecided
 
 
 rankDecoder : String -> JD.Decoder Rank
@@ -75,6 +80,9 @@ suitDecoder suit =
         "spades" ->
             JD.succeed Spades
 
+        "undecided" ->
+            JD.succeed Undecided
+
         _ ->
             JD.fail ("invalid suit: " ++ suit)
 
@@ -84,6 +92,16 @@ cardDecoder =
     JD.succeed Card
         |> custom (JD.field "rank" JD.string |> JD.andThen rankDecoder)
         |> custom (JD.field "suit" JD.string |> JD.andThen suitDecoder)
+
+
+arrayAsTuple2 : JD.Decoder a -> JD.Decoder b -> JD.Decoder ( a, b )
+arrayAsTuple2 a b =
+    JD.index 0 a
+        |> JD.andThen
+            (\aVal ->
+                JD.index 1 b
+                    |> JD.andThen (\bVal -> JD.succeed ( aVal, bVal ))
+            )
 
 
 cardToString : Card -> String
@@ -133,3 +151,6 @@ suitToString suit =
 
         Spades ->
             "Spades"
+
+        Undecided ->
+            "undecided"

@@ -13,8 +13,15 @@ type Stage
     | CallOrPass
 
 
+type Choice
+    = Call
+    | Pass
+    | Loner
+
+
 type PlayerAction
     = ChooseTeam Int
+    | ChooseCallOrPass Choice
 
 
 type Msg
@@ -34,7 +41,7 @@ type alias Score =
 
 
 type alias Trick =
-    List ( String, Card )
+    List PlayedCard
 
 
 type alias GameState =
@@ -42,12 +49,12 @@ type alias GameState =
     , stage : Stage
     , score : Score
     , players : List Player
-
-    --, current_trick : Maybe Trick
-    --, calling_team : Maybe Int
-    --, suit_led : Maybe Suit
-    --, suit_trump : Maybe Suit
-    --, turn : Maybe String
+    , dealer : String
+    , turn : String
+    , current_trick : List PlayedCard
+    , calling_team : Maybe Int
+    , suit_led : Suit
+    , suit_trump : Suit
     }
 
 
@@ -92,3 +99,31 @@ gameStateDecoder =
         |> custom (JD.field "stage" JD.string |> JD.andThen stageDecoder)
         |> required "score" scoreDecoder
         |> required "players" playersDecoder
+        |> required "turn" JD.string
+        |> required "dealer" JD.string
+        |> custom (JD.field "current_trick" (JD.list playedCardDecoder))
+        |> required "calling_team" (JD.nullable JD.int)
+        |> custom (JD.field "suit_trump" JD.string |> JD.andThen suitDecoder)
+        |> custom (JD.field "suit_led" JD.string |> JD.andThen suitDecoder)
+
+
+playedCardDecoder : JD.Decoder PlayedCard
+playedCardDecoder =
+    arrayAsTuple2 JD.string cardDecoder
+
+
+
+-- helpers
+
+
+choiceToString : Choice -> String
+choiceToString choice =
+    case choice of
+        Call ->
+            "call"
+
+        Pass ->
+            "pass"
+
+        Loner ->
+            "loner"

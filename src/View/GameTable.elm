@@ -9,14 +9,22 @@ import Html.Events exposing (onClick, onDoubleClick, onInput)
 import View.Cards exposing (..)
 
 
+playerWrapper : Player -> Html Msg -> Html Msg
+playerWrapper player pView =
+    div [ class "player-view" ]
+        [ pView
+        , div [ class "player-name" ] [ text player.name ]
+        ]
+
+
 playerView : Player -> Bool -> Html Msg
 playerView player currentPlayer =
     case currentPlayer of
         True ->
-            visibleHandView player.hand
+            playerWrapper player (visibleHandView player.hand)
 
         False ->
-            concealedHandView player.hand
+            playerWrapper player (concealedHandView player.hand)
 
 
 currentPlayerFirst : List Player -> String -> List Player

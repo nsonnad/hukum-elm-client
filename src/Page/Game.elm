@@ -45,23 +45,33 @@ view : Session -> Model -> Html Msg
 view session model =
     case model.gameState of
         Just gameState ->
-            case gameState.stage of
-                WaitingForPlayers ->
-                    viewWrapper (viewWaitingForPlayers gameState)
+            let
+                isMyTurn =
+                    session.userName == gameState.turn
+            in
+            case ( gameState.stage, isMyTurn ) of
+                ( WaitingForPlayers, _ ) ->
+                    viewWrapper [ viewWaitingForPlayers gameState ]
 
-                ChoosingTeams ->
-                    viewWrapper (viewChooseTeams gameState)
+                ( ChoosingTeams, _ ) ->
+                    viewWrapper [ viewChooseTeams gameState ]
 
-                CallOrPass ->
-                    viewWrapper (viewGameTable session gameState)
+                ( CallOrPass, True ) ->
+                    viewWrapper
+                        [ viewCallOrPass
+                        , viewGameTable session gameState
+                        ]
+
+                ( CallOrPass, False ) ->
+                    viewWrapper [ viewGameTable session gameState ]
 
         Nothing ->
             h1 [] [ text "Game." ]
 
 
-viewWrapper : Html Msg -> Html Msg
+viewWrapper : List (Html Msg) -> Html Msg
 viewWrapper children =
-    div [ class "page-wrapper" ] [ children ]
+    div [ class "page-wrapper" ] children
 
 
 viewWaitingForPlayers : GameState -> Html Msg
@@ -137,6 +147,14 @@ viewGenerateTeamPlayer player =
                 ]
 
 
+viewCallOrPass : Html Msg
+viewCallOrPass =
+    div [ class "choices-overlay" ]
+        [ button [ onClick (Action (ChooseCallOrPass Pass)), class "button-outline" ] [ text "Pass" ]
+        , button [ onClick (Action (ChooseCallOrPass Call)), class "button-outline" ] [ text "Call" ]
+        ]
+
+
 viewGameTable : Session -> GameState -> Html Msg
 viewGameTable session gameState =
     cardTableView session gameState.players
@@ -159,6 +177,15 @@ encodeAction action =
             JE.object
                 [ ( "action", JE.string "choose_team" )
                 , ( "payload", JE.object [ ( "team", JE.int team ) ] )
+                ]
+
+        ChooseCallOrPass choice ->
+            JE.object
+                [ ( "action", JE.string "call_or_pass" )
+                , ( "payload"
+                  , JE.object
+                        [ ( "choice", JE.string (choiceToString choice) ) ]
+                  )
                 ]
 
 
