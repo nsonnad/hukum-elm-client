@@ -149,9 +149,11 @@ viewGenerateTeamPlayer player =
 
 viewCallOrPass : Html Msg
 viewCallOrPass =
-    div [ class "choices-overlay" ]
-        [ button [ onClick (Action (ChooseCallOrPass Pass)), class "button-outline" ] [ text "Pass" ]
-        , button [ onClick (Action (ChooseCallOrPass Call)), class "button-outline" ] [ text "Call" ]
+    div [ class "interaction-overlay-outer" ]
+        [ div [ class "interaction-overlay-inner" ]
+            [ button [ onClick (Action (ChooseCallOrPass Pass)), class "button-outline" ] [ text "Pass" ]
+            , button [ onClick (Action (ChooseCallOrPass Call)), class "button-outline" ] [ text "Call" ]
+            ]
         ]
 
 

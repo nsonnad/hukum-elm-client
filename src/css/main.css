@@ -9,6 +9,7 @@
   --card-width: 5rem;
   --card-height: calc(var(--card-width) * 2);
   --card-thickness: calc(var(--card-width) / 20rem);
+  --background-color: #fcfcfc;
 }
 
 [data-elm-hot="true"] {
@@ -25,6 +26,7 @@ html, body {
 }
 
 body {
+  background-color: var(--background-color);
   font-family: 'Roboto', serif;
   margin: 0;
   color: #293c4b;
@@ -140,6 +142,19 @@ div.card-table-top .player-name {
 
 div.card-table-right .player-view {
   transform: rotate(270deg);
+}
+
+div.interaction-overlay-outer {
+  background-color: var(--background-color);
+  font-family: 'Roboto', serif;
+  position: absolute;
+  top: 50%;
+  width: 50%;
+  left: 25%;
+}
+
+div.interaction-overlay-inner button {
+  margin: 0px 5px;
 }
 
 .hand {

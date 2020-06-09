@@ -47,15 +47,30 @@ type alias Trick =
 type alias GameState =
     { id : String
     , stage : Stage
-    , score : Score
     , players : List Player
-    , dealer : String
+    , score : Score
     , turn : String
+    , dealer : String
     , current_trick : List PlayedCard
     , calling_team : Maybe Int
     , suit_led : Suit
     , suit_trump : Suit
     }
+
+
+gameStateDecoder : JD.Decoder GameState
+gameStateDecoder =
+    JD.succeed GameState
+        |> required "id" JD.string
+        |> custom (JD.field "stage" JD.string |> JD.andThen stageDecoder)
+        |> required "players" playersDecoder
+        |> required "score" scoreDecoder
+        |> required "turn" JD.string
+        |> required "dealer" JD.string
+        |> custom (JD.field "current_trick" (JD.list playedCardDecoder))
+        |> required "calling_team" (JD.nullable JD.int)
+        |> custom (JD.field "suit_led" JD.string |> JD.andThen suitDecoder)
+        |> custom (JD.field "suit_trump" JD.string |> JD.andThen suitDecoder)
 
 
 scoreDecoder : JD.Decoder Score
@@ -90,21 +105,6 @@ stageDecoder stage =
 
         _ ->
             JD.fail ("invalid stage: " ++ stage)
-
-
-gameStateDecoder : JD.Decoder GameState
-gameStateDecoder =
-    JD.succeed GameState
-        |> required "id" JD.string
-        |> custom (JD.field "stage" JD.string |> JD.andThen stageDecoder)
-        |> required "score" scoreDecoder
-        |> required "players" playersDecoder
-        |> required "turn" JD.string
-        |> required "dealer" JD.string
-        |> custom (JD.field "current_trick" (JD.list playedCardDecoder))
-        |> required "calling_team" (JD.nullable JD.int)
-        |> custom (JD.field "suit_trump" JD.string |> JD.andThen suitDecoder)
-        |> custom (JD.field "suit_led" JD.string |> JD.andThen suitDecoder)
 
 
 playedCardDecoder : JD.Decoder PlayedCard
