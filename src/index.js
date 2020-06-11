@@ -6,8 +6,8 @@ import { Elm } from './Main.elm';
 import * as serviceWorker from './serviceWorker';
 import { Socket, Presence } from 'phoenix';
 
-//var HOST = location.origin.replace(/^http/, 'ws')
-var HOST = "ws://localhost:4000"
+var HOST = location.origin.replace(/^http/, 'ws')
+//var HOST = "ws://localhost:4000"
 
 let socket = new Socket(HOST + "/socket", {})
 socket.connect()
