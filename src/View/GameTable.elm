@@ -99,3 +99,21 @@ cardTableView session gs =
 
         _ ->
             div [ class "card-table" ] [ text "Table" ]
+
+
+countedTricksToStr : List Int -> Int -> String
+countedTricksToStr tricks team =
+    tricks
+        |> List.filter (\t -> t == team)
+        |> List.length
+        |> String.fromInt
+
+
+maybeIntToStr : Maybe Int -> String
+maybeIntToStr i =
+    case i of
+        Just x ->
+            String.fromInt x
+
+        Nothing ->
+            "N/A"

@@ -50,6 +50,22 @@ header.header-game {
   text-align: center;
 }
 
+.registration-error {
+ display:none;
+ background-color: #fff0f0;
+ color: #8f0000;
+ border-radius: 5px;
+}
+
+.registration-error-active {
+ display: inline-block;
+}
+
+.registration-error-active p {
+ padding: 10px;
+ margin: 0px;
+}
+
 div.join-or-create button {
   margin: 0px 10px 10px 10px;
 }
@@ -239,11 +255,29 @@ div.card-table-bottom {
   flex: 1;
 }
 
+div.status-outer {
+  position: relative;
+}
+
+div.game-status {
+  font-family: Consolas,monaco,monospace;
+  font-size: 0.8em;
+  position: absolute;
+  bottom: 0;
+  left: 14px;
+}
+
+div.game-status p {
+  text-align: left;
+  margin-bottom: 0px;
+  padding-left: 4px;
+}
+
+div.game-status table td {
+  padding: 2px 4px;
+}
+
 h1 {
   font-size: 30px;
 }
 
-img {
-  margin: 20px 0;
-  max-width: 200px;
-}

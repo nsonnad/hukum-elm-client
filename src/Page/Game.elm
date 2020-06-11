@@ -3,6 +3,7 @@ port module Page.Game exposing (..)
 import Data.Cards exposing (..)
 import Data.GameState exposing (..)
 import Data.SharedTypes exposing (..)
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, placeholder, type_, value)
 import Html.Events exposing (onClick, onDoubleClick, onInput)
@@ -59,36 +60,84 @@ view session model =
 
                 ( CallOrPass, True ) ->
                     viewWrapper
-                        [ viewCallOrPass
+                        [ viewGameStatus gameState
+                        , viewCallOrPass
                         , viewGameTable session gameState
                         ]
 
                 ( CallOrPass, False ) ->
-                    viewWrapper [ viewGameTable session gameState ]
+                    viewWrapper
+                        [ viewGameStatus gameState
+                        , viewGameTable session gameState
+                        ]
 
                 ( WaitingForFirstCard, _ ) ->
-                    viewWrapper [ viewGameTable session gameState ]
+                    viewWrapper
+                        [ viewGameStatus gameState
+                        , viewGameTable session gameState
+                        ]
 
                 ( WaitingForTrump, True ) ->
                     viewWrapper
-                        [ viewSelectTrump
+                        [ viewGameStatus gameState
+                        , viewSelectTrump
                         , viewGameTable session gameState
                         ]
 
                 ( WaitingForTrump, False ) ->
-                    viewWrapper [ viewGameTable session gameState ]
+                    viewWrapper
+                        [ viewGameStatus gameState
+                        , viewGameTable session gameState
+                        ]
 
                 ( PlayingHand, _ ) ->
-                    viewWrapper [ viewGameTable session gameState ]
+                    viewWrapper
+                        [ viewGameStatus gameState
+                        , viewGameTable session gameState
+                        ]
 
                 ( GameOver, _ ) ->
                     viewWrapper
-                        [ viewGameOver
+                        [ viewGameStatus gameState
+                        , viewGameOver
                         , viewGameTable session gameState
                         ]
 
         Nothing ->
             h1 [] [ text "Game." ]
+
+
+viewGameStatus : GameState -> Html Msg
+viewGameStatus gs =
+    div [ class "game-status" ]
+        [ p [] [ text "GAME STATUS" ]
+        , table []
+            [ tr []
+                [ td [] [ text "trump" ]
+                , td [] [ text (suitToString gs.suitTrump) ]
+                ]
+            , tr []
+                [ td [] [ text "calling team" ]
+                , td [] [ text (maybeIntToStr gs.callingTeam) ]
+                ]
+            , tr []
+                [ td [] [ text "T1 tricks" ]
+                , td [] [ text (countedTricksToStr gs.handTrickWinners 1) ]
+                ]
+            , tr []
+                [ td [] [ text "T2 tricks" ]
+                , td [] [ text (countedTricksToStr gs.handTrickWinners 2) ]
+                ]
+            , tr []
+                [ td [] [ text "T1 score" ]
+                , td [] [ text (maybeIntToStr (Dict.get "1" gs.score)) ]
+                ]
+            , tr []
+                [ td [] [ text "T2 score" ]
+                , td [] [ text (maybeIntToStr (Dict.get "2" gs.score)) ]
+                ]
+            ]
+        ]
 
 
 viewWrapper : List (Html Msg) -> Html Msg

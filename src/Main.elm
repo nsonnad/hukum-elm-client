@@ -16,15 +16,26 @@ import Page.Lobby as Lobby
 ---- MODEL ----
 
 
+type UserNameValid
+    = Valid
+    | Invalid
+
+
+type Errors
+    = UserNameInvalid
+    | None
+
+
 type alias Model =
     { page : Page
     , session : Session
+    , error : Errors
     }
 
 
 type Msg
     = UpdateUsername String
-    | AddNewUser JE.Value
+    | AddNewUser String
     | Registered JE.Value
     | GotLobbyMsg Lobby.Msg
     | GotGameMsg Data.GameState.Msg
@@ -45,10 +56,25 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
         UpdateUsername userName ->
-            ( { model | session = setUserName userName model.session }, Cmd.none )
+            ( { model
+                | session = setUserName userName model.session
+                , error = None
+              }
+            , Cmd.none
+            )
 
         AddNewUser userName ->
-            ( model, addNewUser userName )
+            case validateUsername userName of
+                True ->
+                    ( { model
+                        | session = setUserName userName model.session
+                        , error = None
+                      }
+                    , addNewUser (JE.string userName)
+                    )
+
+                False ->
+                    ( { model | error = UserNameInvalid }, Cmd.none )
 
         Registered status ->
             case JD.decodeValue JD.bool status of
@@ -106,6 +132,11 @@ setUserName userName session =
     { session | userName = userName }
 
 
+validateUsername : String -> Bool
+validateUsername userName =
+    String.length userName >= 4 && String.all Char.isAlphaNum userName
+
+
 
 ---- VIEW ----
 
@@ -116,7 +147,7 @@ view model =
         content =
             case model.page of
                 Registration ->
-                    viewWrapper (viewUnregistered model.session.userName)
+                    viewWrapper (viewUnregistered model)
 
                 Lobby lobby ->
                     Lobby.view model.session lobby
@@ -143,8 +174,8 @@ viewWrapper children =
         [ div [ class "column column-80 column-offset-10" ] [ children ] ]
 
 
-viewUnregistered : String -> Html Msg
-viewUnregistered userName =
+viewUnregistered : Model -> Html Msg
+viewUnregistered model =
     div [ class "unregistered" ]
         [ p [] [ text "Welcome. Please enter the name we should call you by:" ]
         , div [ class "new-player-form row" ]
@@ -152,24 +183,30 @@ viewUnregistered userName =
                 [ input
                     [ type_ "text"
                     , placeholder "username"
-                    , value userName
+                    , value model.session.userName
                     , onInput UpdateUsername
                     ]
                     []
                 ]
             , div [ class "column column-10 column-offset-65" ]
-                [ viewBroadcastButton userName AddNewUser ]
+                [ viewNewUserButton model.session.userName ]
             ]
+        , div
+            [ classList
+                [ ( "registration-error", True )
+                , ( "registration-error-active", model.error == UserNameInvalid )
+                ]
+            ]
+            [ p [] [ text "Username must be 4 or more alphanumeric characters." ] ]
         ]
 
 
-viewBroadcastButton : String -> (JE.Value -> Msg) -> Html Msg
-viewBroadcastButton value action =
+viewNewUserButton : String -> Html Msg
+viewNewUserButton value =
     let
         broadcastAction =
             value
-                |> JE.string
-                |> action
+                |> AddNewUser
                 |> onClick
     in
     button
@@ -225,6 +262,7 @@ initModel : Model
 initModel =
     { page = Registration
     , session = { userName = "" }
+    , error = None
     }
 
 
