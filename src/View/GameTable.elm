@@ -11,7 +11,6 @@ import View.Cards exposing (..)
 
 playerView : Player -> String -> Bool -> Html Msg
 playerView player turn currentPlayer =
-    -- todo: truth table of (currentPlayer, isMyTurn)
     let
         isTurn =
             turn == player.name
@@ -58,6 +57,20 @@ currentPlayerFirst players userName =
             []
 
 
+isUserPlayer : List Player -> String -> Bool
+isUserPlayer players userName =
+    case players of
+        p :: rest ->
+            if p.name == userName then
+                True
+
+            else
+                isUserPlayer rest userName
+
+        [] ->
+            False
+
+
 playedCardsView : List Card -> Stage -> Html Msg
 playedCardsView cards stage =
     case ( cards, stage ) of
@@ -70,35 +83,66 @@ playedCardsView cards stage =
                 (List.map (cardFrontView []) (List.reverse cards))
 
 
+
+-- TODO: refactor this hack to allow observers
+
+
 cardTableView : Session -> GameState -> Html Msg
 cardTableView session gs =
-    let
-        arrangedPlayers =
-            currentPlayerFirst gs.players session.userName
-    in
-    case arrangedPlayers of
-        [ p1, p2, p3, p4 ] ->
-            div [ class "card-table" ]
-                [ div [ class "player-area" ]
-                    [ div [ class "card-table-top" ]
-                        [ playerView p3 gs.turn False ]
-                    ]
-                , div [ class "card-table-center" ]
-                    [ div [ class "card-table-left" ]
-                        [ playerView p2 gs.turn False ]
-                    , div [ class "card-table-play-area" ]
-                        [ playedCardsView gs.currentTrick gs.stage ]
-                    , div [ class "card-table-right" ]
-                        [ playerView p4 gs.turn False ]
-                    ]
-                , div [ class "player-area" ]
-                    [ div [ class "card-table-bottom" ]
-                        [ playerView p1 gs.turn True ]
-                    ]
-                ]
+    case isUserPlayer gs.players session.userName of
+        True ->
+            let
+                arrangedPlayers =
+                    currentPlayerFirst gs.players session.userName
+            in
+            case arrangedPlayers of
+                [ p1, p2, p3, p4 ] ->
+                    div [ class "card-table" ]
+                        [ div [ class "player-area" ]
+                            [ div [ class "card-table-top" ]
+                                [ playerView p3 gs.turn False ]
+                            ]
+                        , div [ class "card-table-center" ]
+                            [ div [ class "card-table-left" ]
+                                [ playerView p2 gs.turn False ]
+                            , div [ class "card-table-play-area" ]
+                                [ playedCardsView gs.currentTrick gs.stage ]
+                            , div [ class "card-table-right" ]
+                                [ playerView p4 gs.turn False ]
+                            ]
+                        , div [ class "player-area" ]
+                            [ div [ class "card-table-bottom" ]
+                                [ playerView p1 gs.turn True ]
+                            ]
+                        ]
 
-        _ ->
-            div [ class "card-table" ] [ text "Table" ]
+                _ ->
+                    div [ class "card-table" ] [ text "Table" ]
+
+        False ->
+            case gs.players of
+                [ p1, p2, p3, p4 ] ->
+                    div [ class "card-table" ]
+                        [ div [ class "player-area" ]
+                            [ div [ class "card-table-top" ]
+                                [ playerView p3 gs.turn False ]
+                            ]
+                        , div [ class "card-table-center" ]
+                            [ div [ class "card-table-left" ]
+                                [ playerView p2 gs.turn False ]
+                            , div [ class "card-table-play-area" ]
+                                [ playedCardsView gs.currentTrick gs.stage ]
+                            , div [ class "card-table-right" ]
+                                [ playerView p4 gs.turn False ]
+                            ]
+                        , div [ class "player-area" ]
+                            [ div [ class "card-table-bottom" ]
+                                [ playerView p1 gs.turn False ]
+                            ]
+                        ]
+
+                _ ->
+                    div [ class "card-table" ] [ text "Table" ]
 
 
 countedTricksToStr : List Int -> Int -> String

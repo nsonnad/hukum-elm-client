@@ -6,8 +6,8 @@ import { Elm } from './Main.elm';
 import * as serviceWorker from './serviceWorker';
 import { Socket, Presence } from 'phoenix';
 
-var HOST = location.origin.replace(/^http/, 'ws')
-//var HOST = "ws://localhost:4000"
+//var HOST = location.origin.replace(/^http/, 'ws')
+var HOST = "ws://localhost:4000"
 
 let socket = new Socket(HOST + "/socket", {})
 socket.connect()
@@ -67,7 +67,10 @@ function joinGameChannel(lobby, userName, gameName) {
     gameChannel = socket.channel("game:" + gameName, {user_name: userName})
 
     gameChannel.join()
-      .receive("ok", resp => { app.ports.joinedGameChannel.send(true) })
+      .receive("ok", resp => {
+        app.ports.joinedGameChannel.send(true)
+        app.ports.gotGameState.send(resp.game)
+      })
       .receive("error", resp => { app.ports.joinedGameChannel.send(false) })
 
     gameChannel.on("game_state", gameState => {
