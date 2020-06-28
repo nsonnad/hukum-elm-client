@@ -83,13 +83,8 @@ td.join-btn {
   text-align: right;
 }
 
-tr.game-list-row:hover button {
-  visibility: visible;
-}
-
 button.game-list-join {
   margin: 0;
-  visibility: hidden;
   display: table-cell;
   height: 23px;
   line-height: 0;
